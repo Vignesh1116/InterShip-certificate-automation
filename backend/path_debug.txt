@@ -1,0 +1,5 @@
+
+--- Generate Cert 2026-04-29 15:33:28.889576 ---
+PROJECT_ROOT: D:\Downloads\Interen Certificate
+CWD: D:\Downloads\Interen Certificate\backend
+Checking D:\Downloads\Interen Certificate\frontend\public\Magizh_Tech_Logo.png: FOUND

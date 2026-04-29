@@ -1,0 +1,151 @@
+.home-page {
+  padding: calc(72px + var(--space-xl)) var(--space-xl) var(--space-xl);
+  min-height: 100vh;
+  background: #f8fafc;
+}
+
+.home-container {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.home-header-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: var(--space-2xl);
+}
+
+.home-main-title {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: var(--color-text-primary);
+  letter-spacing: -0.03em;
+  margin-bottom: 4px;
+}
+
+.home-subtitle {
+  font-size: 1.1rem;
+  color: var(--color-text-secondary);
+}
+
+/* Stats Badges */
+.stats-badges {
+  display: flex;
+  gap: var(--space-md);
+}
+
+.stat-badge {
+  background: white;
+  border: 1px solid var(--glass-border);
+  padding: 12px 20px;
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  min-width: 140px;
+  box-shadow: var(--shadow-sm);
+}
+
+.stat-badge-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+  margin-bottom: 4px;
+}
+
+.stat-badge-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.badge-blue { border-left: 4px solid var(--color-primary); }
+.badge-green { border-left: 4px solid #10b981; }
+
+/* Grid Layout */
+.home-grid {
+  display: grid;
+  grid-template-columns: 450px 1fr;
+  gap: var(--space-xl);
+  align-items: start;
+}
+
+/* Table Styles */
+.student-table-wrapper {
+  margin-top: var(--space-lg);
+  overflow-x: auto;
+}
+
+.student-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.student-table th {
+  text-align: left;
+  padding: 12px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+  border-bottom: 2px solid #f1f5f9;
+}
+
+.student-table td {
+  padding: 16px 12px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.student-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.student-name {
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.student-email {
+  font-size: 0.8rem;
+  color: var(--color-text-secondary);
+}
+
+.role-chip {
+  padding: 4px 10px;
+  background: #f1f5f9;
+  border-radius: 100px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #475569;
+}
+
+.status-badge {
+  padding: 6px 12px;
+  border-radius: 100px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.status-completed {
+  background: #ecfdf5;
+  color: #059669;
+}
+
+.status-ongoing {
+  background: #fff7ed;
+  color: #d97706;
+}
+
+.loading-state {
+  padding: var(--space-2xl);
+  text-align: center;
+  color: var(--color-text-secondary);
+}
+
+@media (max-width: 1200px) {
+  .home-grid {
+    grid-template-columns: 1fr;
+  }
+}

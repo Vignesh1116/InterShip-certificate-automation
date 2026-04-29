@@ -1,11 +1,13 @@
 from fastapi import FastAPI, Depends, HTTPException
+from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
-from .database import SessionLocal, engine, Base
-from . import models, auth, certificate
-import random, string
-
-from fastapi.responses import HTMLResponse
+from database import SessionLocal, engine, Base
+import models
+import auth
+import certificate
+import random, string, os
 
 app = FastAPI()
 
@@ -20,110 +22,28 @@ app.add_middleware(
 
 Base.metadata.create_all(bind=engine)
 
-@app.get("/", response_class=HTMLResponse)
-def root():
-    return """
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Magizh Technologies - Certificate System</title>
-        <style>
-            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
-            
-            body {
-                margin: 0;
-                font-family: 'Inter', sans-serif;
-                background: linear-gradient(135deg, #1a237e 0%, #0d47a1 100%);
-                color: white;
-                height: 100vh;
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
-                align-items: center;
-                text-align: center;
-            }
-            
-            .container {
-                background: rgba(255, 255, 255, 0.1);
-                backdrop-filter: blur(10px);
-                padding: 3rem;
-                border-radius: 20px;
-                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-                border: 1px solid rgba(255, 255, 255, 0.1);
-                max-width: 600px;
-            }
-            
-            h1 {
-                font-size: 3rem;
-                margin-bottom: 1rem;
-                background: linear-gradient(to right, #fff, #90caf9);
-                -webkit-background-clip: text;
-                -webkit-text-fill-color: transparent;
-            }
-            
-            p {
-                font-size: 1.2rem;
-                opacity: 0.8;
-                margin-bottom: 2rem;
-            }
-            
-            .badge {
-                background: #d32f2f;
-                padding: 0.5rem 1rem;
-                border-radius: 50px;
-                font-weight: 600;
-                font-size: 0.9rem;
-                text-transform: uppercase;
-                letter-spacing: 1px;
-                margin-bottom: 1.5rem;
-                display: inline-block;
-            }
-            
-            .btn {
-                background: #fff;
-                color: #1a237e;
-                padding: 1rem 2rem;
-                border-radius: 10px;
-                text-decoration: none;
-                font-weight: 700;
-                transition: all 0.3s ease;
-                display: inline-block;
-            }
-            
-            .btn:hover {
-                transform: translateY(-3px);
-                box-shadow: 0 10px 20px rgba(0,0,0,0.2);
-                background: #f0f0f0;
-            }
-            
-            .status {
-                margin-top: 2rem;
-                font-size: 0.9rem;
-                color: #81d4fa;
-            }
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <div class="badge">Internal System</div>
-            <h1>Magizh Technologies</h1>
-            <p>Professional Internship Certificate Generation & Verification System</p>
-            <a href="/docs" class="btn">Explore API Docs</a>
-            <div class="status">● System Operational</div>
-        </div>
-    </body>
-    </html>
-    """
+# Resolve project root for certificates directory
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+CERTS_DIR = os.path.join(PROJECT_ROOT, "certificates")
+
 
 def get_db():
     db = SessionLocal()
     yield db
     db.close()
 
+
 def gen_id():
     return "CERT-" + ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+
+
+@app.get("/")
+def root():
+    return {
+        "status": "online",
+        "system": "Magizh Technologies - Certificate System",
+        "version": "2.1.0"
+    }
 
 
 @app.post("/register")
@@ -140,36 +60,149 @@ def register(name: str, email: str, password: str, role: str, db: Session = Depe
     return {"message": "User Registered"}
 
 
-@app.post("/login")
-def login(email: str, password: str, db: Session = Depends(get_db)):
-    user = db.query(models.User).filter(models.User.email == email).first()
+class LoginRequest(BaseModel):
+    email: str
+    password: str
 
-    if not user or not auth.verify_password(password, user.password):
-        raise HTTPException(400, "Invalid")
+@app.post("/login")
+def login(request: LoginRequest, db: Session = Depends(get_db)):
+    # Hardcoded admin credentials as requested
+    if request.email == "admin@gmail.com" and request.password == "admin@123":
+        return {"token": auth.create_token({"id": 0, "role": "admin"})}
+    
+    user = db.query(models.User).filter(models.User.email == request.email).first()
+
+    if not user or not auth.verify_password(request.password, user.password):
+        raise HTTPException(400, "Invalid credentials.")
 
     return {"token": auth.create_token({"id": user.id})}
 
 
-@app.post("/generate/{user_id}")
-def generate(user_id: int,
-             role: str,
-             start_date: str,
-             end_date: str,
-             db: Session = Depends(get_db)):
+@app.post("/generate")
+def generate(
+    name: str,
+    email: str,
+    role: str,
+    start_date: str,
+    end_date: str,
+    db: Session = Depends(get_db)
+):
+    """Generate a certificate for a student. Auto-creates user if not exists."""
 
-    user = db.query(models.User).get(user_id)
+    # Check if user exists by email, or create a new one
+    user = db.query(models.User).filter(models.User.email == email).first()
 
     if not user:
-        raise HTTPException(404, f"User with ID {user_id} not found. Please check the ID and try again.")
+        internship_id = f"INT-{random.randint(1000, 9999)}"
+        user = models.User(
+            name=name,
+            email=email,
+            password=auth.hash_password("default123"),
+            role=role,
+            internship_id=internship_id
+        )
+        db.add(user)
+        db.flush()  # Get the user ID
+    else:
+        # Update name/role if changed
+        user.name = name
+        user.role = role
 
     cert_id = gen_id()
+
+    # Make sure cert_id is unique
+    while db.query(models.Certificate).filter_by(cert_id=cert_id).first():
+        cert_id = gen_id()
 
     file_path = certificate.generate_certificate(user, cert_id, role, start_date, end_date)
 
     db.add(models.Certificate(
-        user_id=user_id,
+        user_id=user.id,
         cert_id=cert_id,
         role=role,
+        issue_date=start_date
+    ))
+
+    db.commit()
+
+    return {
+        "cert_id": cert_id,
+        "file": file_path,
+        "student_name": user.name,
+        "student_email": user.email,
+        "internship_id": user.internship_id,
+        "role": role,
+        "start_date": start_date,
+        "end_date": end_date
+    }
+
+
+from pydantic import BaseModel
+
+class InternCreate(BaseModel):
+    name: str
+    email: str
+    role: str
+    start_date: str
+    end_date: str
+
+@app.post("/interns")
+def add_intern(intern: InternCreate, db: Session = Depends(get_db)):
+    try:
+        # Check if user already exists
+        user = db.query(models.User).filter(models.User.email == intern.email).first()
+        
+        if user:
+            # Update existing user
+            user.name = intern.name
+            user.role = intern.role
+            user.start_date = intern.start_date
+            user.end_date = intern.end_date
+            db.commit()
+            db.refresh(user)
+            return {"message": "Intern updated successfully", "internship_id": user.internship_id, "user_id": user.id}
+        
+        # Create new user
+        internship_id = f"INT-{random.randint(1000, 9999)}"
+        user = models.User(
+            name=intern.name,
+            email=intern.email,
+            password=auth.hash_password("default123"),
+            role=intern.role,
+            internship_id=internship_id,
+            start_date=intern.start_date,
+            end_date=intern.end_date
+        )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+        return {"message": "Intern added successfully", "internship_id": internship_id, "user_id": user.id}
+    except Exception as e:
+        db.rollback()
+        print(f"Error adding intern: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+
+@app.post("/generate/intern/{internship_id}")
+def generate_by_internship_id(internship_id: str, db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.internship_id == internship_id).first()
+
+    if not user:
+        raise HTTPException(404, f"Intern with Internship ID {internship_id} not found.")
+
+    cert_id = gen_id()
+    while db.query(models.Certificate).filter_by(cert_id=cert_id).first():
+        cert_id = gen_id()
+
+    # Use defaults if dates are missing for older records
+    start_date = user.start_date or "01 May 2025"
+    end_date = user.end_date or "30 June 2025"
+
+    file_path = certificate.generate_certificate(user, cert_id, user.role, start_date, end_date)
+
+    db.add(models.Certificate(
+        user_id=user.id,
+        cert_id=cert_id,
+        role=user.role,
         issue_date=start_date
     ))
 
@@ -185,10 +218,135 @@ def verify(cert_id: str, db: Session = Depends(get_db)):
     if not cert:
         return {"status": "INVALID"}
 
-    user = db.query(models.User).get(cert.user_id)
+    user = db.get(models.User, cert.user_id)
 
     return {
         "status": "VERIFIED",
         "name": user.name,
-        "company": "Magizh Technologies"
+        "email": user.email,
+        "company": "Magizh Technologies",
+        "role": cert.role,
+        "cert_id": cert.cert_id,
+        "internship_id": user.internship_id,
+        "issue_date": cert.issue_date
+    }
+
+
+@app.get("/preview/{cert_id}")
+def preview_certificate(cert_id: str, db: Session = Depends(get_db)):
+    """Preview the generated certificate PDF in the browser."""
+    cert = db.query(models.Certificate).filter_by(cert_id=cert_id).first()
+    if not cert:
+        raise HTTPException(404, "Certificate not found")
+
+    pdf_path = os.path.join(CERTS_DIR, f"{cert_id}.pdf")
+    if not os.path.exists(pdf_path):
+        raise HTTPException(404, "Certificate file not found")
+
+    # By omitting the 'filename' parameter, FastAPI will not force 'attachment',
+    # allowing the browser to display the PDF inline.
+    return FileResponse(
+        pdf_path,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"inline; filename={cert_id}.pdf"}
+    )
+
+@app.get("/download/{cert_id}")
+def download_certificate(cert_id: str, db: Session = Depends(get_db)):
+    """Download the generated certificate PDF."""
+    cert = db.query(models.Certificate).filter_by(cert_id=cert_id).first()
+    if not cert:
+        raise HTTPException(404, "Certificate not found")
+
+    pdf_path = os.path.join(CERTS_DIR, f"{cert_id}.pdf")
+    if not os.path.exists(pdf_path):
+        raise HTTPException(404, "Certificate file not found")
+
+    return FileResponse(
+        pdf_path,
+        media_type="application/pdf",
+        filename=f"{cert_id}.pdf"
+    )
+
+
+@app.get("/students")
+def list_students(db: Session = Depends(get_db)):
+    """List all students/users with internship status."""
+    from datetime import datetime
+    users = db.query(models.User).all()
+    today = datetime.now().date()
+    
+    results = []
+    for u in users:
+        status = "Doing Internship"
+        if u.end_date:
+            try:
+                end_dt = datetime.strptime(u.end_date, "%Y-%m-%d").date()
+                if today > end_dt:
+                    status = "Completed"
+            except:
+                pass
+        
+        results.append({
+            "id": u.id,
+            "name": u.name,
+            "email": u.email,
+            "role": u.role,
+            "internship_id": u.internship_id,
+            "start_date": u.start_date,
+            "end_date": u.end_date,
+            "status": status
+        })
+    return results
+
+
+@app.get("/certificates")
+def list_certificates(db: Session = Depends(get_db)):
+    """List all certificates."""
+    certs = db.query(models.Certificate).all()
+    results = []
+    for c in certs:
+        user = db.get(models.User, c.user_id)
+        results.append({
+            "cert_id": c.cert_id,
+            "student_name": user.name if user else "Unknown",
+            "role": c.role,
+            "issue_date": c.issue_date
+        })
+    return results
+
+
+@app.get("/stats")
+def get_stats(db: Session = Depends(get_db)):
+    """Get overall internship statistics based on dates."""
+    from datetime import datetime
+    users = db.query(models.User).all()
+    today = datetime.now().date()
+    
+    total_users = len(users)
+    completed_count = 0
+    
+    for u in users:
+        if u.end_date:
+            try:
+                end_dt = datetime.strptime(u.end_date, "%Y-%m-%d").date()
+                if today > end_dt:
+                    completed_count += 1
+            except:
+                pass
+    
+    doing_count = total_users - completed_count
+    
+    # Role distribution
+    role_counts = {}
+    for u in users:
+        role = u.role
+        if role:
+            role_counts[role] = role_counts.get(role, 0) + 1
+        
+    return {
+        "total_students": total_users,
+        "doing_internships": doing_count,
+        "completed_internships": completed_count,
+        "roles": [{"role": k, "count": v} for k, v in role_counts.items()]
     }

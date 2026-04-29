@@ -3,7 +3,8 @@ uvicorn
 sqlalchemy
 passlib[bcrypt]
 python-multipart
-reportlab
+fpdf
 qrcode
 pillow
-python-jose
+pyjwt
+python-dotenv
