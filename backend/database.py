@@ -6,7 +6,8 @@ import os
 # Fallback to local SQLite if not provided
 DATABASE_URL = os.getenv("DATABASE_URL")
 if not DATABASE_URL:
-    BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    # BASE_DIR is backend/
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
     db_path = os.path.join(BASE_DIR, 'test.db')
     DATABASE_URL = f"sqlite:///{db_path}"
     print(f"DATABASE: Using SQLite at {db_path}")

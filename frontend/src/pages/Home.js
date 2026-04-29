@@ -51,7 +51,10 @@ function Home() {
       setName(""); setEmail(""); setRole(""); setStart(""); setEnd("");
       fetchData();
     } catch (err) {
-      setMessage({ type: "error", text: err.response?.data?.detail || "Failed to add student." });
+      const errorMsg = err.response?.data?.detail 
+        ? (typeof err.response.data.detail === 'string' ? err.response.data.detail : JSON.stringify(err.response.data.detail))
+        : (err.message || "Failed to add student.");
+      setMessage({ type: "error", text: errorMsg });
     } finally {
       setFormLoading(false);
     }

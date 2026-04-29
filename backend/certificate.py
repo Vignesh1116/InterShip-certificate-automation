@@ -98,11 +98,11 @@ def generate_certificate(student, cert_id, role, start_date, end_date):
     
     c.setFont("Helvetica-Bold", 9)
     c.setFillColor(HexColor("#666666"))
-    c.drawString(108, height - 105, "CERTIFICATE PLATFORM")
+    c.drawString(108, height - 140, "CERTIFICATE PLATFORM")
     
     c.setFont("Helvetica", 10)
     c.setFillColor(HexColor("#666666"))
-    c.drawString(108, height - 108, "www.magizhtechnologies.com")
+    c.drawString(108, height - 170, "www.magizhtechnologies.com")
     
     # 3. Top Right: Certificate ID
     c.setFont("Helvetica-Bold", 10)

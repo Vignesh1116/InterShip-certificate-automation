@@ -180,6 +180,8 @@ def add_intern(intern: InternCreate, db: Session = Depends(get_db)):
         return {"message": "Intern added successfully", "internship_id": internship_id, "user_id": user.id}
     except Exception as e:
         db.rollback()
+        import traceback
+        traceback.print_exc()
         print(f"Error adding intern: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
