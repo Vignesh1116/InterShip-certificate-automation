@@ -80,7 +80,7 @@ def generate_certificate(student, cert_id, role, start_date, end_date):
     draw_background(c, width, height)
     
     # 2. Top Left: Logo & Company Name
-    logo_path = os.path.join(PROJECT_ROOT, "frontend", "public", "Magizh_Tech_Logo.png")
+    logo_path = os.path.join(PROJECT_ROOT, "frontend", "public", "Magizh Tech Logo.png")
     
     if os.path.exists(logo_path):
         # Draw the wide logo image
@@ -98,11 +98,11 @@ def generate_certificate(student, cert_id, role, start_date, end_date):
     
     c.setFont("Helvetica-Bold", 9)
     c.setFillColor(HexColor("#666666"))
-    c.drawString(110, height - 115, "CERTIFICATE PLATFORM")
+    c.drawString(108, height - 105, "CERTIFICATE PLATFORM")
     
     c.setFont("Helvetica", 10)
     c.setFillColor(HexColor("#666666"))
-    c.drawString(110, height - 128, "www.magizhtechnologies.com")
+    c.drawString(108, height - 108, "www.magizhtechnologies.com")
     
     # 3. Top Right: Certificate ID
     c.setFont("Helvetica-Bold", 10)
@@ -222,4 +222,4 @@ def generate_certificate(student, cert_id, role, start_date, end_date):
     c.drawCentredString(120, height/2 + 2, "\u2605 \u2605 \u2605")
     
     c.save()
-    return file_path
+    return file_path

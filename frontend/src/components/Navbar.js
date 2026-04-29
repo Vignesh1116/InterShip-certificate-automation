@@ -69,7 +69,7 @@ function Navbar({ setIsAuthenticated }) {
         {/* Brand Section */}
         <Link to="/" className="navbar-brand">
           <div className="brand-logo-container">
-            <img src="/Magizh_Tech_Logo.png" alt="Magizh Technologies" className="brand-logo-img" />
+            <img src="/Magizh Tech Logo.png" alt="Magizh Technologies" className="brand-logo-img" />
           </div>
           <div className="brand-text-container">
             <span className="brand-primary-text">Magizh Technologies</span>

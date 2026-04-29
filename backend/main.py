@@ -8,6 +8,7 @@ import models
 import auth
 import certificate
 import random, string, os
+from datetime import datetime
 
 app = FastAPI()
 
@@ -120,7 +121,7 @@ def generate(
         user_id=user.id,
         cert_id=cert_id,
         role=role,
-        issue_date=start_date
+        issue_date=datetime.now().strftime("%Y-%m-%d")
     ))
 
     db.commit()
@@ -203,12 +204,21 @@ def generate_by_internship_id(internship_id: str, db: Session = Depends(get_db))
         user_id=user.id,
         cert_id=cert_id,
         role=user.role,
-        issue_date=start_date
+        issue_date=datetime.now().strftime("%Y-%m-%d")
     ))
 
     db.commit()
 
-    return {"cert_id": cert_id, "file": file_path}
+    return {
+        "cert_id": cert_id,
+        "file": file_path,
+        "student_name": user.name,
+        "student_email": user.email,
+        "internship_id": user.internship_id,
+        "role": user.role,
+        "start_date": start_date,
+        "end_date": end_date
+    }
 
 
 @app.get("/verify/{cert_id}")
@@ -272,7 +282,6 @@ def download_certificate(cert_id: str, db: Session = Depends(get_db)):
 @app.get("/students")
 def list_students(db: Session = Depends(get_db)):
     """List all students/users with internship status."""
-    from datetime import datetime
     users = db.query(models.User).all()
     today = datetime.now().date()
     
@@ -319,7 +328,6 @@ def list_certificates(db: Session = Depends(get_db)):
 @app.get("/stats")
 def get_stats(db: Session = Depends(get_db)):
     """Get overall internship statistics based on dates."""
-    from datetime import datetime
     users = db.query(models.User).all()
     today = datetime.now().date()
     

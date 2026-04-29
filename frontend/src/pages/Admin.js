@@ -1,8 +1,10 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { API } from "../api";
 import "./Admin.css";
 
 function Admin() {
+  const navigate = useNavigate();
   // Generate State
   const [internshipId, setInternshipId] = useState("");
   const [genLoading, setGenLoading] = useState(false);
@@ -104,15 +106,21 @@ function Admin() {
                     <span className="result-value">{genResult.student_name}</span>
                   </div>
                   <div className="divider" />
-                  <div className="result-row" style={{border: "none"}}>
-                    <button 
-                      onClick={() => window.open(`http://${window.location.hostname}:8000/preview/${genResult.cert_id}`, "_blank")}
-                      className="btn btn-outline btn-full"
-                      style={{marginTop: "10px"}}
-                    >
-                      👁️ View Certificate
-                    </button>
-                  </div>
+                    <div className="result-row" style={{border: "none", gap: "10px", flexDirection: "column"}}>
+                      <button 
+                        onClick={() => window.open(`http://${window.location.hostname}:8000/preview/${genResult.cert_id}`, "_blank")}
+                        className="btn btn-outline btn-full"
+                        style={{marginTop: "10px"}}
+                      >
+                        👁️ View Certificate
+                      </button>
+                      <button 
+                        onClick={() => navigate("/certificates")}
+                        className="btn btn-primary btn-full"
+                      >
+                        📂 Go to Certificates Page
+                      </button>
+                    </div>
                 </div>
               </div>
             )}

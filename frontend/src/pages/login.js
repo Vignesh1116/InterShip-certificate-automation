@@ -31,7 +31,7 @@ function Login({ setAuth }) {
       <div className="login-card">
         <div className="login-header">
           <div className="login-logo-wrapper">
-            <img src="/Magizh_Tech_Logo.png" alt="Logo" className="login-logo" />
+            <img src="/Magizh Tech Logo.png" alt="Logo" className="login-logo" />
           </div>
           <h1>Admin Portal</h1>
           <p>Please sign in to access management tools</p>
