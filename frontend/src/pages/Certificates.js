@@ -19,11 +19,13 @@ function Certificates() {
   }, []);
 
   const handlePreview = (certId) => {
-    window.open(`${API.defaults.baseURL}/preview/${certId}`, "_blank");
+    const baseUrl = API.defaults.baseURL.endsWith('/') ? API.defaults.baseURL.slice(0, -1) : API.defaults.baseURL;
+    window.open(`${baseUrl}/preview/${certId}`, "_blank");
   };
 
   const handleDownload = (certId) => {
-    window.open(`${API.defaults.baseURL}/download/${certId}`, "_blank");
+    const baseUrl = API.defaults.baseURL.endsWith('/') ? API.defaults.baseURL.slice(0, -1) : API.defaults.baseURL;
+    window.open(`${baseUrl}/download/${certId}`, "_blank");
   };
 
   return (

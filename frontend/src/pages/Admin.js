@@ -108,7 +108,10 @@ function Admin() {
                   <div className="divider" />
                     <div className="result-row" style={{border: "none", gap: "10px", flexDirection: "column"}}>
                       <button 
-                        onClick={() => window.open(`${API.defaults.baseURL}/preview/${genResult.cert_id}`, "_blank")}
+                        onClick={() => {
+                          const baseUrl = API.defaults.baseURL.endsWith('/') ? API.defaults.baseURL.slice(0, -1) : API.defaults.baseURL;
+                          window.open(`${baseUrl}/preview/${genResult.cert_id}`, "_blank");
+                        }}
                         className="btn btn-outline btn-full"
                         style={{marginTop: "10px"}}
                       >
