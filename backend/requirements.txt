@@ -8,3 +8,6 @@ qrcode
 pillow
 pyjwt
 python-dotenv
+reportlab
+gunicorn
+uvicorn[standard]
