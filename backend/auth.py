@@ -3,11 +3,10 @@ import jwt, datetime
 
 SECRET = "secret"
 
-pwd = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 
 def hash_password(p):
-    # Bcrypt has a 72-character limit
-    return pwd.hash(p[:72])
+    return pwd.hash(p)
 
 def verify_password(p, h):
     return pwd.verify(p, h)
