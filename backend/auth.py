@@ -6,7 +6,8 @@ SECRET = "secret"
 pwd = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def hash_password(p):
-    return pwd.hash(p)
+    # Bcrypt has a 72-character limit
+    return pwd.hash(p[:72])
 
 def verify_password(p, h):
     return pwd.verify(p, h)
