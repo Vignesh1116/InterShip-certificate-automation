@@ -9,6 +9,7 @@ from datetime import datetime
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ASSETS_DIR = os.path.join(PROJECT_ROOT, "assets")
 CERTS_DIR = os.path.join(PROJECT_ROOT, "certificates")
+os.makedirs(CERTS_DIR, exist_ok=True)
 
 def draw_background(c, width, height):
     # Colors
