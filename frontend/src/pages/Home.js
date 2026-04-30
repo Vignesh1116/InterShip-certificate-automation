@@ -63,7 +63,7 @@ function Home() {
   const handleGenerate = async (internshipId) => {
     try {
       const res = await API.post(`/generate/intern/${internshipId}`);
-      window.open(`http://${window.location.hostname}:8000/preview/${res.data.cert_id}`, "_blank");
+      window.open(`${API.defaults.baseURL}/preview/${res.data.cert_id}`, "_blank");
     } catch (err) {
       alert(err.response?.data?.detail || "Failed to generate certificate.");
     }

@@ -19,11 +19,11 @@ function Certificates() {
   }, []);
 
   const handlePreview = (certId) => {
-    window.open(`http://${window.location.hostname}:8000/preview/${certId}`, "_blank");
+    window.open(`${API.defaults.baseURL}/preview/${certId}`, "_blank");
   };
 
   const handleDownload = (certId) => {
-    window.open(`http://${window.location.hostname}:8000/download/${certId}`, "_blank");
+    window.open(`${API.defaults.baseURL}/download/${certId}`, "_blank");
   };
 
   return (
