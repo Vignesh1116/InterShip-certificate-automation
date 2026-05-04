@@ -5,11 +5,18 @@ import qrcode
 import os
 from datetime import datetime
 
-# Resolve paths relative to the project root (parent of backend/)
-PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# Resolve paths relative to the current file (backend/certificate.py)
+BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.dirname(BACKEND_DIR)
 ASSETS_DIR = os.path.join(PROJECT_ROOT, "assets")
-CERTS_DIR = os.path.join(PROJECT_ROOT, "certificates")
-os.makedirs(CERTS_DIR, exist_ok=True)
+
+# Use a certificates directory inside the backend folder for better reliability on cloud hosts
+CERTS_DIR = os.path.join(BACKEND_DIR, "certificates")
+
+try:
+    os.makedirs(CERTS_DIR, exist_ok=True)
+except Exception as e:
+    print(f"CRITICAL: Could not create certificates directory: {e}")
 
 def draw_background(c, width, height):
     # Colors
@@ -71,8 +78,10 @@ def draw_background(c, width, height):
     c.drawCentredString(width/2, 15, "Building Skills | Delivering Solutions | Creating Futures")
 
 def generate_certificate(student, cert_id, role, start_date, end_date):
-    os.makedirs(CERTS_DIR, exist_ok=True)
-    file_path = os.path.join(CERTS_DIR, f"{cert_id}.pdf")
+    try:
+        os.makedirs(CERTS_DIR, exist_ok=True)
+        file_path = os.path.join(CERTS_DIR, f"{cert_id}.pdf")
+        print(f"Generating certificate for {student.name} at {file_path}")
     
     width, height = landscape(A4)
     c = canvas.Canvas(file_path, pagesize=landscape(A4))
@@ -159,7 +168,11 @@ def generate_certificate(student, cert_id, role, start_date, end_date):
     c.drawCentredString(width/2, height - 450, desc2)
 
     # 6. QR Code
-    frontend_url = os.environ.get("FRONTEND_URL", "http://172.20.51.74:3000")
+    frontend_url = os.environ.get("FRONTEND_URL", "https://inter-ship-certificate-automation.vercel.app")
+    # Ensure no trailing slash
+    if frontend_url.endswith('/'):
+        frontend_url = frontend_url[:-1]
+        
     qr_data = f"{frontend_url}/verify?id={cert_id}"
     qr = qrcode.QRCode(version=1, box_size=10, border=1)
     qr.add_data(qr_data)
@@ -222,5 +235,18 @@ def generate_certificate(student, cert_id, role, start_date, end_date):
     c.setFont("Helvetica", 14)
     c.drawCentredString(120, height/2 + 2, "\u2605 \u2605 \u2605")
     
-    c.save()
+    try:
+        c.save()
+        print(f"Successfully saved certificate: {cert_id}")
+    except Exception as e:
+        print(f"Error saving PDF: {e}")
+        raise
+
+    # Cleanup QR code temp file
+    try:
+        if os.path.exists(qr_path):
+            os.remove(qr_path)
+    except:
+        pass
+
     return file_path

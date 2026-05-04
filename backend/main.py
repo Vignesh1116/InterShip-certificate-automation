@@ -23,9 +23,10 @@ app.add_middleware(
 
 Base.metadata.create_all(bind=engine)
 
-# Resolve project root for certificates directory
-PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-CERTS_DIR = os.path.join(PROJECT_ROOT, "certificates")
+# Resolve backend directory and certificates directory
+BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
+CERTS_DIR = os.path.join(BACKEND_DIR, "certificates")
+os.makedirs(CERTS_DIR, exist_ok=True)
 
 
 def get_db():
@@ -187,40 +188,56 @@ def add_intern(intern: InternCreate, db: Session = Depends(get_db)):
 
 @app.post("/generate/intern/{internship_id}")
 def generate_by_internship_id(internship_id: str, db: Session = Depends(get_db)):
-    user = db.query(models.User).filter(models.User.internship_id == internship_id).first()
+    # Normalize input
+    internship_id = internship_id.strip()
+    print(f"Generation request for Intern ID: {internship_id}")
+
+    # Case-insensitive search for better UX
+    user = db.query(models.User).filter(models.User.internship_id.ilike(internship_id)).first()
 
     if not user:
+        print(f"Error: Intern {internship_id} not found in database.")
         raise HTTPException(404, f"Intern with Internship ID {internship_id} not found.")
 
-    cert_id = gen_id()
-    while db.query(models.Certificate).filter_by(cert_id=cert_id).first():
+    try:
         cert_id = gen_id()
+        while db.query(models.Certificate).filter_by(cert_id=cert_id).first():
+            cert_id = gen_id()
 
-    # Use defaults if dates are missing for older records
-    start_date = user.start_date or "01 May 2025"
-    end_date = user.end_date or "30 June 2025"
+        # Use defaults if dates are missing for older records
+        start_date = user.start_date or "01 May 2025"
+        end_date = user.end_date or "30 June 2025"
 
-    file_path = certificate.generate_certificate(user, cert_id, user.role, start_date, end_date)
+        print(f"Calling certificate generator for {user.name}...")
+        file_path = certificate.generate_certificate(user, cert_id, user.role or "Intern", start_date, end_date)
 
-    db.add(models.Certificate(
-        user_id=user.id,
-        cert_id=cert_id,
-        role=user.role,
-        issue_date=datetime.now().strftime("%Y-%m-%d")
-    ))
+        db.add(models.Certificate(
+            user_id=user.id,
+            cert_id=cert_id,
+            role=user.role or "Intern",
+            issue_date=datetime.now().strftime("%Y-%m-%d")
+        ))
 
-    db.commit()
+        db.commit()
+        print(f"Generation complete. Certificate ID: {cert_id}")
 
-    return {
-        "cert_id": cert_id,
-        "file": file_path,
-        "student_name": user.name,
-        "student_email": user.email,
-        "internship_id": user.internship_id,
-        "role": user.role,
-        "start_date": start_date,
-        "end_date": end_date
-    }
+        return {
+            "cert_id": cert_id,
+            "file": file_path,
+            "student_name": user.name,
+            "student_email": user.email,
+            "internship_id": user.internship_id,
+            "role": user.role,
+            "start_date": start_date,
+            "end_date": end_date
+        }
+    except Exception as e:
+        db.rollback()
+        import traceback
+        error_trace = traceback.format_exc()
+        print(f"CRITICAL ERROR during generation: {str(e)}")
+        print(error_trace)
+        raise HTTPException(status_code=500, detail=f"Generation failed: {str(e)}")
 
 
 @app.get("/verify/{cert_id}")

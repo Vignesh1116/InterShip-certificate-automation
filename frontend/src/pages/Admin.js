@@ -24,9 +24,13 @@ function Admin() {
         text: "Certificate generated successfully!",
       });
     } catch (err) {
+      const errorMsg = err.response?.data?.detail 
+        ? (typeof err.response.data.detail === 'string' ? err.response.data.detail : JSON.stringify(err.response.data.detail))
+        : (err.message || "Failed to generate certificate.");
+      
       setGenMessage({
         type: "error",
-        text: err.response?.data?.detail || "Failed to generate certificate.",
+        text: errorMsg,
       });
     }
     setGenLoading(false);
@@ -117,6 +121,9 @@ function Admin() {
                       >
                         👁️ View Certificate
                       </button>
+                      <p className="text-muted" style={{fontSize: "0.75rem", textAlign: "center"}}>
+                        If preview doesn't open, <a href={`${API.defaults.baseURL.replace(/\/$/, '')}/preview/${genResult.cert_id}`} target="_blank" rel="noreferrer" style={{color: "var(--color-primary)", textDecoration: "underline"}}>click here</a>.
+                      </p>
                       <button 
                         onClick={() => navigate("/certificates")}
                         className="btn btn-primary btn-full"

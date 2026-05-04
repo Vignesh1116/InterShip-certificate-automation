@@ -15,6 +15,7 @@ function Home() {
   const [end, setEnd] = useState("");
   const [formLoading, setFormLoading] = useState(false);
   const [message, setMessage] = useState(null);
+  const [genStatus, setGenStatus] = useState({}); // Tracking generation status per intern
 
   const fetchData = async () => {
     try {
@@ -61,12 +62,24 @@ function Home() {
   };
 
   const handleGenerate = async (internshipId) => {
+    setGenStatus(prev => ({ ...prev, [internshipId]: "loading" }));
     try {
       const res = await API.post(`/generate/intern/${internshipId}`);
+      setGenStatus(prev => ({ ...prev, [internshipId]: "success", lastCertId: res.data.cert_id }));
+      
       const baseUrl = API.defaults.baseURL.endsWith('/') ? API.defaults.baseURL.slice(0, -1) : API.defaults.baseURL;
-      window.open(`${baseUrl}/preview/${res.data.cert_id}`, "_blank");
+      const previewUrl = `${baseUrl}/preview/${res.data.cert_id}`;
+      
+      // Attempt to open, but also provide a link in the UI in case it's blocked
+      window.open(previewUrl, "_blank");
+      
+      // Refresh stats
+      fetchData();
     } catch (err) {
-      alert(err.response?.data?.detail || "Failed to generate certificate.");
+      console.error(err);
+      const errorMsg = err.response?.data?.detail || "Failed to generate certificate.";
+      setGenStatus(prev => ({ ...prev, [internshipId]: "error", error: errorMsg }));
+      alert(errorMsg);
     }
   };
 
@@ -186,9 +199,20 @@ function Home() {
                           </td>
                           <td>
                             {s.status === 'Completed' ? (
-                              <button onClick={() => handleGenerate(s.internship_id)} className="btn btn-primary btn-sm">
-                                📜 Generate
-                              </button>
+                              <div className="action-cell">
+                                <button 
+                                  onClick={() => handleGenerate(s.internship_id)} 
+                                  className={`btn btn-primary btn-sm ${genStatus[s.internship_id] === "loading" ? "btn-loading" : ""}`}
+                                  disabled={genStatus[s.internship_id] === "loading"}
+                                >
+                                  {genStatus[s.internship_id] === "loading" ? <span className="spinner spinner-sm" /> : "📜 Generate"}
+                                </button>
+                                {genStatus[s.internship_id] === "success" && (
+                                  <div className="gen-success-msg">
+                                    ✅ Done! <a href={`${API.defaults.baseURL.replace(/\/$/, '')}/preview/${genStatus.lastCertId}`} target="_blank" rel="noreferrer">View</a>
+                                  </div>
+                                )}
+                              </div>
                             ) : (
                               <span className="text-muted" style={{fontSize: "0.8rem"}}>Ongoing...</span>
                             )}
